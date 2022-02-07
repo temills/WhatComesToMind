@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dartmouth College</title>
+        <script src="/static/jspsych-6.3.1/jspsych.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-survey-text.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-call-function.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-html-slider-response.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-survey-likert.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-html-button-response.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-survey-multi-choice.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-canvas-button-response.js"></script>
+        <script src="/static/jspsych-6.3.1/plugins/jspsych-canvas-keyboard-response.js"></script>
+        <link href="/static/jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <script.src = 'https://code.jquery.com/jquery-3.4.1.min.js'></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <body>
+        <div id="obstacle_list"></div>
+    </body>
+    <script>
+    //To Do
+    //figure out how to do the images of robots during the feedback trials - one on each side?
+    //how to make sure they learn the robots this time?
+    //get background images
+
+
+    /*
+        Want to manipulate so one of the three features is particularly useful, but individual bots with this feature are not the correct choice more often
+           this is important because we want to make sure that if we see an effect, it is because the bot has this feature, and not because the bot itself was particularly valuable
+               so thinking we shouldn't make these trials more valuable bc then confounding variable of those wugs being involved in more important trials - should just have more of that trial type to make the feature itself more valuable
+            more tasks where that feature comes into play (hearing well), also pay more
+           choice of two bots to force them to learn all of them
+               all with useful feature with each without useful feature
+               right: 111   110   101   100 *4,   wrong: 011   010   001   000 *4 (hearing)(16)
+               now those with nonuseful feature and not useful feature paired with not nonuseful feature (sorry)
+               right: 011*2  010*4,  wrong: 100*2 101*4, 110 111 (smell)(6)
+               right: 011*2 001*4,   wrong: 100*2 110*4, 111 101 (sight)(6)
+               all except for 000 right answer 4 times
+               all except for 111 wrong 4 times
+               all seen 8 times, except 111 and 000 seen 4
+    */
+
+    /***************************************** Constant variables *********************************************/
+
+    const completion_code = 'xxx';
+    const nTrials = 28;
+    const all_robots_imgPath = "../static/img.png";
+
+    /***************************************** Trial Variables *********************************************/
+
+    //list of robots represented by features (ears/eyes/mouth, 1 for big and 0 for small)
+    var robots_unshuffled = ['111', '110', '101', '011', '100', '010', '001', '000'];
+    //shuffle robots
+    var robots = jsPsych.randomization.sampleWithoutReplacement(robots_unshuffled, robots_unshuffled.length);
+    
+    //corresponding robot names
+    var names_unshufled = ["Theresa", "Danielle", "Beverly", "Rose", "Greg", "Eugene", "Vincent", "Russell"];
+    //shuffle names
+    var names = jsPsych.randomization.sampleWithoutReplacement(names_unshuffled, names_unshuffled.length);
+
+    //assign names to robots and store in dict
+    var robot_name_dict = {}
+    for(i=0;i<robots.length;i++){
+        robot_name_dict[robots[i]] = names[i];
+    }
+    
+    //get useful feature 0-2 (ears, eyes, nose)
+    var useful = jsPsych.randomization.sampleWithoutReplacement([0,1,2], 1)[0];
+    var usefulFt = ['ears','eyes','nose'][useful];
+
+    var jewels_by_type = {'ears': 3, 'eyes': 3, 'nose': 3};
+    //var jewels_by_type[usefulFt] = 6;
+
+    //list of robot pairs, assuming first feature is useful
+    var temp_pairs = [['111','011'], ['111','010'], ['111','001'], ['111','000'], ['110','011'], ['110','010'], ['110','001'], ['110','000'], ['101','011'], ['101','010'], ['101','001'], ['101','000'], ['100','011'], ['100','010'], ['100','001'], ['100','000'], ['011','100'], ['011','101'], ['010','100'], ['010','101'], ['010','101'], ['010','101'], ['011','100'], ['011','110'], ['001','100'], ['001','110'], ['001','110'], ['001','110']];
+    
+    //if first feature not useful, switch 0th feature with useful feature and then reorder (messy but idk an easier way to do this)
+    if(useful==0) {
+        robot_pairs = {'ears': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(0, 16),16), 'eyes': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(16,22),6), 'nose': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(22,28),6)};
+    } else if(useful==1) {
+        temp_pairs = switch_pairs_idx(temp_pairs, 0, 1);
+        robot_pairs = {'ears': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(16,22),6), 'eyes': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(0, 16),16), 'nose': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(22,28),6)};
+    } else {
+        temp_pairs = switch_pairs_idx(temp_pairs, 0, 2);
+        robot_pairs = {'ears': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(22,28),6), 'eyes': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(16,22),6), 'nose': jsPsych.randomization.sampleWithoutReplacement(temp_pairs.slice(0, 16),16)};
+    }
+    //switches feature val at i1 and i2 in list of robot pairs
+    function switch_pairs_idx(pairs, i1, i2) {
+        new_pairs = []
+        for(var i=0;i<pairs.length;i++) {
+            new_p = pairs[i];
+            new_p[0][i1] = pairs[i][0][i2]
+            new_p[0][i2] = pairs[i][0][i1]
+            new_p[1][i1] = pairs[i][1][i2]
+            new_p[1][i2] = pairs[i][1][i1]
+            new_pairs.append(new_p)
+        };
+        return new_pairs;
+    }
+    //robot pairs now holds all pairs for each trial type, with correct response first in pair
+
+    //finally, set up list of all info for each trial: obstacle type, obstacle text, and robot pair to choose from
+    //obstacle_list + 2 randomly chosen for each ft, + 10 more for useful ft
+    var obstacle_text_unshuffled = obstacle_list.concat(jsPsych.randomization.sampleWithoutReplacement(obstacleList.slice(0,4), 2).concat(jsPsych.randomization.sampleWithoutReplacement(obstacleList.slice(4,8), 2)).concat(jsPsych.randomization.sampleWithoutReplacement(obstacleList.slice(8,12), 2)).concat(jsPsych.randomization.sampleWithoutReplacement(obstacleList.slice(useful,useful+4), 10)))
+    //shuffle order
+    var obstacle_list = jsPsych.randomization.sampleWithoutReplacement(obstacles_unshuffled, obstacles_unshuffled.length);
+    //list to hold, for each trial, obstacle type, obstacle text, robot pair to choose from, and correct robot choice
+    var obstacles = [];
+    var iDict = {'ears':0,'eyes':0,'nose':0};
+    for(var i=0;i<obstacle_list.length;i++) {
+        o = obstacle_list[i];   //type and text
+        obs_type = o[0];
+        obs_text = o[1];
+        obs_feedback = o[2];
+        pairIdx = iDict[obs_type];    //pair index for this obstacle type
+        iDict[obs_type] = iDict[obs_type]+1; //iterate index
+        pair = robot_pairs[obs_type][pairIdx]
+        correct = pair[0]
+        obstacles.push({'type': obs_type, 'text': obs_text, 'pair': jsPsych.sampleWithoutReplacement(pair, 2), 'correct': correct, 'feedback': obs_feedback, 'img': imgPath});
+    }
+
+
+    /***************************************** Trials *********************************************/
+
+    // consent
+    var consent = {
+        type: "html-button-response",
+        stimulus: "<DIV align='left'><div>&nbsp;</div><div>Please consider this information carefully before deciding whether to participate in this research.</div><div>&nbsp;</div><div>The purpose of this research is to examine which factors influence social judgment and decision-</div><div>making. You will be asked to make judgements about individuals and actions in social scenarios.</div><div>We are simply interested in your judgement. The study will take less than 1 hour to complete,</div><div>and you will receive less than $20 on Amazon Mechanical Turk. Your compensation and time</div><div>commitment are specified in the study description. There are no anticipated risks associated with</div><div>participating in this study. The effects of participating should be comparable to those you would</div><div>ordinarily experience from viewing a computer monitor and using a mouse or keyboard for a</div><div>similar amount of time. At the end of the study, we will provide an explanation of the questions</div><div>that motivate this line of research and will describe the potential implications.</div><div>&nbsp;</div><div>Your participation in this study is completely voluntary and you may refuse to participate or you</div><div>may choose to withdraw at any time without penalty or loss of benefits to you which are</div><div>otherwise entitled. Your participation in this study will remain confidential. No personally</div><div>identifiable information will be associated with your data. Also, all analyses of the data will be</div><div>averaged across all the participants, so your individual responses will never be specifically</div><div>analyzed.</div><div>&nbsp;</div><div>If you have questions or concerns about your participation or payment, or want to request a</div><div>summary of research findings, please contact Dr. Jonathan Phillips at</div><div><a href=mailto:Jonathan.S.Phillips@dartmouth.edu>Jonathan.S.Phillips@dartmouth.edu</a>.</div><div>&nbsp;</div><div>Please save a copy of this form for your records.</div><div>&nbsp;</div></DIV><div>Agreement:</div><DIV align='left'><div>The nature and purpose of this research have been sufficiently explained and I agree to</div><div>participate in this study. I understand that I am free to withdraw at any time without incurring</div><div>any penalty. Please consent by clicking the button below to continue. Otherwise, please exit the</div><div>study at any time.</div><div>&nbsp;</div></DIV>",
+        choices: ['Submit']
+    };
+    //welcome
+    var welcome = {
+	    type: "html-keyboard-response",
+	    stimulus: "<div class='center-content'><br><br><br><br>Welcome to the HIT. Press any key to begin.",
+    };
+
+    //get subject ID
+    var get_id = {
+	    type: 'survey-text',
+        preamble: ["Please enter your Prolific Worker ID below.<br><br>If you do not enter your ID accurately, we will not be able to pay you."],
+        questions: [{prompt: "Worker ID:", name: "subject_id", required: true}],
+        on_finish: function(data){
+            jsPsych.data.addProperties({
+                subject_id: data['response']['subject_id'],
+            });
+        }
+    }
+
+    var instructions = {
+        type: "html-button-response",
+        stimulus: "You have been tasked with exploring an alien planet. <br> After being dropped off at a remote location, you are asked to navigate the dangerous land and collect valuable jewels as you find your way to your crew's spaceship. <br> You will face obstacles as you go. The more successfully you deal with these obstacles, the more jewels you will gather! <br> These jewels will bring honor and prosperity to your homeland. <br> Additionally, at the end of the task, <b>you will earn " + nCents + " additional cents per jewel you have collected</b>, for a maximum of extra earnings of $" + maxEarnings + ". <br>",
+        choices: ['Continue']
+    };
+
+    var robot_introductions1 = {
+        type: "html-button-response",
+        stimulus: "Luckily, you won't be facing these obstacles alone. You've been given a team of helpful robots! <br> Each robot is unique, and can help in different ways. <br> Click 'Continue' to meet the team!",
+        choices: ['Continue']
+    };
+
+    var robot_introductions1 = {
+        type: "image-button-response",
+        stimulus: all_robots_imgPath,
+        prompt: "Here is your team. <br> As you can see, each robot has ears, eyes, and a mouth that are each either big or small. <br> Robots with big ears can hear better than robots with small ears, robots with big eyes can see better than robots with smal eyes, and robots with big noses can smell better than robots with small noses. <br> You will need to learn their as you go in order to choose the best robot to help you with each obstacle. <br> Click 'Continue' to begin!",
+        choices: ['Continue']
+    };
+
+    var obstacle = {
+        type: "image-button-response",
+        stimulus: function() {
+            return imgPath;
+            //return obstacles[i][3];
+        },
+        prompt: function() {
+            //get obstacle text
+            return obstacles[i].text + "<br> Which of these robots would you like to help you?";
+        },
+        choices: function() {
+            //get names of robot pair for this obstacle, order already randomized
+            return [robot_name_dict[obstacles[i].pair[0]], robot_name_dict[obstacles[i].pair[1]]];
+        },
+        on_finish: function(data) {
+            data.obstacle_type = obstacles[i].type;
+            data.robot_pair = obstacles[i].pair;
+            //correct robot choice
+            data.correct_response = obstacles[i].correct;
+            data.response = obstacles[i].pair[data.response];
+            //does chosen robot match correct choice?
+            data.is_correct = data.response==data.correct_response;
+        }
+    }
+
+    var feedback = {
+        type: "image-button-response",
+        stimulus: function() {
+            return obstacles[i].img;
+        },
+        prompt: function() {
+            last = jsPsych.data.get().last(1).values()[0];
+            name_response = robot_name_dict[last.response];
+            if (last.is_correct) { 
+                return name_response + ' ' + obstacles[i].feedback[0] + '. <br> You earned ' + jewels_by_type[obstacles[i].type] + ' jewels!';
+            } else {
+                return name_response + ' ' + obstacles[i].feedback[1] + '. <br> You did not earn any jewels';
+            }
+        },
+        choices: function() {
+            //get names of robot pair for this obstacle, order already randomized
+            return [robot_name_dict[obstacles[i][3][0]], robot_name_dict[obstacles[i][3][1]]];
+        },
+        on_finish: function(data) {
+            data.obstacle_type = obstacles[i][0];
+            data.robot_pair = obstacles[i][3];
+            //correct robot choice
+            data.correct_response = obstacles[i][4];
+            //does chosen robot match correct choice?
+            data.is_correct = obstacles[i][3][data.response]==data.correct_response;
+        }
+    }
+
+
+    function save_data() {
+        //var url = "botstudy";
+        var url = "/";
+        var inData = jsPsych.data.get().json();
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({
+            inData
+        }));
+    }
+
+
+
+
+    //set timeline
+    timeline = [];
+    /*
+    timeline.push(consent);
+    timeline.push(welcome);
+    timeline.push(get_id);
+    */
+    timeline.push(instructions);
+    timeline.push(robot_introductions1);
+    timeline.push(robot_introductions2);
+    timeline.push(robot_introductions3);
+    for (var i = 0; i < nTrials-1; i++) {
+        timeline.push(obstacle);
+        timeline.push(obstacle_feedback);
+    };
+    timeline.push(check_instructions)
+    for (var j = 0; j < nTrials; j++) {
+        timeline.push(check_clue_trial);
+    };
+    timeline.push(demo_instructions)
+    timeline.push(demo1);
+    timeline.push(demo2);
+    timeline.push(end);
+    timeline.push(debrief);
+
+    jsPsych.init({
+        timeline:timeline,
+    });
+
+    </script>
+</html>
