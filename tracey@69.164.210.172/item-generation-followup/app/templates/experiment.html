@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dartmouth College</title>
+        <script src="../static/jspsych-6.3.1/jspsych.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-survey-text.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-call-function.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-button-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-survey-multi-choice.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-slider-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-test.js"></script>
+        <link href="../static/jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <script.src = 'https://code.jquery.com/jquery-3.4.1.min.js'></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <body>
+    </body> 
+    <script>
+    //bigness predicts coming to mind for zoo animals
+    //if people asked to name small zoo animals, more errors?
+
+    //want response, considerations, for each consideration the rating for both features, adn rts
+
+    //10 features
+    //want average of 20 subjects for each feature
+    //200 subjects
+    //3 min each
+
+    /***************************************** Variables *********************************************/
+
+    var completion_code = 'xxx';
+   
+    var ft_questions = {"small": "What zoo animal is the smallest?", "large": "What zoo animal is the largest?", "striking":"What zoo animal is the most striking?", "unremarkable":"What zoo animal is the most unremarkable?", "cool": "What zoo animal is the coolest?", "boring": "What zoo animal is the most boring?", "dangerous":"What zoo animal is the most dangerous?", "harmless":"What zoo animal is the most harmless?", "long-lived":"What zoo animal has the longest lifespan?", "short-lived":"What zoo animal has the shortest lifespan?"};
+    var ft = jsPsych.randomization.sampleWithoutReplacement(Object.keys(ft_questions), 1)[0];
+    var opp = {"small":"large","large":"small","striking":"unremarkable","unremarkable":"striking","cool":"boring","boring":"cool","harmless":"dangerous","dangerous":"harmless","long-lived":"short-lived","short-lived":"long-lived"};
+    var opp_ft = opp[ft];
+    var rating_ft = ft;
+
+    var answer = "";
+    var answer_rt = 0;
+    var ft_dict = {};
+    var opp_ft_dict = {};
+    var ft_dict_rt = {}
+    var opp_ft_dict_rt = {}
+    var considerations = [];
+    var consid_idx = 0;
+    var num_consid = 8;
+    var timeline = [];
+
+    /***************************************** Trials *********************************************/
+
+    // consent
+    var consent = {
+        type: "html-button-response",
+        stimulus: "<DIV align='left'><div>&nbsp;</div><div>Please consider this information carefully before deciding whether to participate in this research.</div><div>&nbsp;</div><div>The purpose of this research is to examine which factors influence social judgment and decision-</div><div>making. You will be asked to make judgements about individuals and actions in social scenarios.</div><div>We are simply interested in your judgement. The study will take less than 1 hour to complete,</div><div>and you will receive less than $20 on Amazon Mechanical Turk. Your compensation and time</div><div>commitment are specified in the study description. There are no anticipated risks associated with</div><div>participating in this study. The effects of participating should be comparable to those you would</div><div>ordinarily experience from viewing a computer monitor and using a mouse or keyboard for a</div><div>similar amount of time. At the end of the study, we will provide an explanation of the questions</div><div>that motivate this line of research and will describe the potential implications.</div><div>&nbsp;</div><div>Your participation in this study is completely voluntary and you may refuse to participate or you</div><div>may choose to withdraw at any time without penalty or loss of benefits to you which are</div><div>otherwise entitled. Your participation in this study will remain confidential. No personally</div><div>identifiable information will be associated with your data. Also, all analyses of the data will be</div><div>averaged across all the participants, so your individual responses will never be specifically</div><div>analyzed.</div><div>&nbsp;</div><div>If you have questions or concerns about your participation or payment, or want to request a</div><div>summary of research findings, please contact Dr. Jonathan Phillips at</div><div><a href=mailto:Jonathan.S.Phillips@dartmouth.edu>Jonathan.S.Phillips@dartmouth.edu</a>.</div><div>&nbsp;</div><div>Please save a copy of this form for your records.</div><div>&nbsp;</div></DIV><div>Agreement:</div><DIV align='left'><div>The nature and purpose of this research have been sufficiently explained and I agree to</div><div>participate in this study. I understand that I am free to withdraw at any time without incurring</div><div>any penalty. Please consent by clicking the button below to continue. Otherwise, please exit the</div><div>study at any time.</div><div>&nbsp;</div></DIV>",
+        choices: ['Submit']
+    };
+
+    //welcome
+    var welcome = {
+	    type: "html-keyboard-response",
+	    stimulus: "<div class='center-content'><br><br><br><br>Welcome to the HIT. Press any key to begin.",
+    };
+
+    //get subject ID
+    var get_id = {
+	    type: 'survey-text',
+        preamble: ["Please enter your Prolific Worker ID below.<br><br>If you do not enter your ID accurately, we will not be able to pay you."],
+        questions: [{prompt: "Worker ID:", name: "subject_id", required: true}],
+        on_finish: function(data){
+            jsPsych.data.addProperties({
+                subject_id: data['response']['subject_id'],
+            });
+        }
+    }
+
+    var instructions = {
+        type: "html-button-response",
+        stimulus: "In this study, you will be asked to answer a question, and then to reflect on the process which led you to your answer.<br><br>",
+        choices: ['Begin']
+    };
+
+    response_trial_1 = {
+        type: 'survey-text',
+        preamble: ft_questions[ft],
+        questions: [
+            { prompt: "", required: "true"}
+        ],
+        on_finish(data) {
+            answer = Object.values(data.response)[0];
+            answer_rt = data.rt;
+        }
+    };
+
+    response_trial_2 = {
+        type: 'survey-text',
+        preamble: "<br>Please list all of the zoo animals that you can remember considering before you made your decision <b>(you should include what you actually chose)</b>.<br>It's completely okay to list them if you thought about them, but then immediately realized they weren't actually good options.<br>Type \"n/a\" in any unused text boxes.",
+        questions: [
+            {prompt: "", required: true},
+            {prompt: "", required: true},
+            {prompt: "", required: true},
+            {prompt: "", required: true},
+            {prompt: "", required: true},
+            {prompt: "", required: true},
+            {prompt: "", required: true},
+            {prompt: "", required: true}
+        ],
+        on_finish: function(data) {
+            for(j=0;j<num_consid;j++) {
+                res = Object.values(data.response)[j];
+                considerations.push(res);
+            }
+        }
+    };
+
+    var instructions_2 = {
+        type: "html-button-response",
+        stimulus: "In this next part of this study, you will be asked to rate how well certain descriptions fit different zoo animals.<br><br>",
+        choices: ['Begin']
+    };
+
+    var if_trial = {
+        type: 'html-slider-response',
+        stimulus: "",
+        prompt: function() {
+            article = "a";
+            if (["a","e","i","o","u"].includes(considerations[consid_idx-1][0])) {
+                article = "an";
+            }
+            return "How " + rating_ft + " is " + article + " " + "<b>" + considerations[consid_idx-1] + "</b>?<br><br>";
+        },
+        labels: ["not " + rating_ft, "very " + rating_ft],
+        slider_width: '500px',
+        require_movement: true,
+        slider_start: 50,
+        on_finish: function (data) {
+            if (rating_ft==ft) {
+                ft_dict[considerations[consid_idx-1]] = data.response;
+                ft_dict_rt[considerations[consid_idx-1]] = data.rt;
+            }
+            else {
+                opp_ft_dict[considerations[consid_idx-1]] = data.response;
+                opp_ft_dict_rt[considerations[consid_idx-1]] = data.rt;
+            }
+        }
+    };
+
+    var if_node = {
+        timeline: [if_trial],
+        conditional_function: function(){
+            if (consid_idx==num_consid) {
+                consid_idx = 0;
+                rating_ft = opp_ft;
+            }
+            var ok_con = !(["na", "n a", "n/a", "n /a", "n/ a", "none"].includes(considerations[consid_idx].toLowerCase().trim()));
+            consid_idx = consid_idx + 1;
+            if(ok_con){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    //demographics  
+    var demo_instructions = {
+        type: "html-keyboard-response",
+        stimulus: "<div>Next, please provide us with some demographic information.</div><div>Press any key to begin.</div>",
+        on_finish() {
+            all_data = {};
+            all_data.answer = answer;
+            all_data.answer_rt = answer_rt;
+            all_data.considerations = considerations;
+            all_data.ft = ft;
+            all_data.opp_ft = opp_ft;
+            all_data.ft_dict = ft_dict;
+            all_data.opp_ft_dict = opp_ft_dict;
+            all_data.ft_dict_rt = ft_dict_rt;
+            all_data.opp_ft_dict_rt = opp_ft_dict_rt;
+            save_data(all_data);
+        }
+    };
+    var demo1 = {
+        type: 'survey-text',
+        preamble: '',
+        questions: [{prompt: "How old are you?", required: true}, {prompt: "What is your native language?", required: true}, {prompt: "What is your nationality?", required: true}, {prompt: "In which country do you live?", required: true}],
+    };
+    //saves data on completion of this trial
+    var demo2 = {
+        type: 'survey-multi-choice',
+        preamble: "Please provide us with some demographic information.",
+        questions: [
+            {prompt: "What is your gender?", options: ["Male","Female","Other"], required:true}, 
+            {prompt: "Are you a student?", options: ["Yes","No"], required: true},
+            {prompt: "What is your education level?", options: ["Grade/elementary school","High school","Some college or university","College or university degree","Graduate degree, Masters","PhD"], required: true}
+        ],
+        on_finish: function(data) {
+            data.exp_phase = 'subject_info';
+            var lastData = jsPsych.data.get().last(2).values();
+            var demo1 = lastData[0]['response'];
+            var demo2 = lastData[1]['response'];
+            data.age = demo1['Q0'];
+            data.language = demo1['Q1'];
+            data.nationality = demo1['Q2'];
+            data.country = demo1['Q3'];
+            data.gender = demo2['Q0'];
+            data.student = demo2['Q1'];
+            data.education = demo2['Q2'];
+            data.completion_code = completion_code;
+            save_data(data);
+        },
+	};
+
+    //provide completion code
+    var end = {
+        type: "html-button-response",
+        stimulus: "<h4>Thank you for your participation!</h4><h4>In order to complete this HIT, you must enter the code below into Prolific.</h4><h4>Your secret completion code is:<br><br>" + completion_code + "<br><br>Copy this code now.</h4><h4>Once you've copied it, click the button below to leave this window.</h4>",
+        choices: ['Finish'],
+    };
+
+    //debrief
+    var end_debrief = {
+	    type: "html-keyboard-response",
+	    stimulus: "<DIV align='left'><div>&nbsp;</div><div><strong>Study Debriefing</strong></div><div>Judgement and decision making are important aspects of public and private life. Using surveys</div><div>like the one you just completed, we are examining the factors that go into making social</div><div>decisions.</div><div>&nbsp;</div><div><strong>How is this being tested?</strong></div><div>We have asked you to respond to stories or videos that differ on several important factors. By</div><div>isolating different variables that are involved in social thought, we can better understand how we</div><div>arrive at complex decision-making. For example, some actions are seen as more worthy of blame</div><div>if they are performed intentionally. Harming someone on purpose is generally worse than</div><div>harming someone by accident, or even harming someone in a way that is foreseen but not</div><div>intended.</div><div>&nbsp;</div><div><strong>Main questions and hypotheses:</strong></div><div>A fundamental goal of our research is to understand the cognitive and emotional factors that</div><div>influence social judgment and decision-making. We are studying these factors by presenting</div><div>people with hypothetical questions that vary in specific ways and seeing which factors make a</div><div>difference. Some people filled out the same survey that you just filled out. Others got slightly</div><div>different surveys.</div><div>&nbsp;</div><div><strong>Why is this important to study?</strong></div><div>By comparing answers on these important factors, we learn about what factors affect social</div><div>judgment. This has crucial implications for many public domains, including the legal system.</div><div>&nbsp;</div><div><strong>How to learn more:</strong></div><div>If you are interested in learning more, you may want to consult the following articles:</div><div>Phillips, J., &amp; Cushman, F. (2017). Morality constrains the default representation of what is</div><div style='padding-left: 30px;'>possible. Proceedings of the National Academy of Sciences of the United States of</div><div style='padding-left: 30px;'>America, 114(18), 4649&ndash;4654. https://doi.org/10.1073/pnas.1619717114</div><div>Phillips, J., Morris, A., &amp; Cushman, F. (2019). How we know what not to think.</div><div style='padding-left: 30px;'>Trends in Cognitive Sciences, 23(12), 1026&ndash;1040. https://doi.org/10.1016/j.tics.2019.09.007</div><div>Phillips, J., Buckwalter, W., Cushman, F., Friedman, O., Martin, A., Turri, J., Santos, L., &amp;</div><div style='padding-left: 30px;'>Knobe, J. (2020). Knowledge before Belief. Behavioral and Brain Sciences, 1-37.</div><div style='padding-left: 30px;'>doi:10.1017/S0140525X20000618</div><div>&nbsp;</div><div><strong>How to contact the researcher:</strong></div><div>If you have questions or concerns about your participation or</div><div>payment, or want to request a summary of research findings, please contact the Primary</div><div>Investigator: Dr. Jonathan Phillips, at Jonathan.S.Phillips@dartmouth.edu.</div><div>Whom to contact about your rights in this research:</div><div>If you have questions, concerns,</div><div>complaints, or suggestions about the present research, you may call the Office of the Committee</div><div>for the Protection of Human Subjects at Dartmouth College (603) 646-6482 during normal</div><div>business hours.</div><div>&nbsp;</div><div><strong>Thank you for your participation!</strong></div><div>&nbsp;</div></DIV>",
+    };
+
+    //save data to database
+    function save_data(data) {
+        return;
+        //var url = "wordGame"; //use this when running on server
+        var url = "/"; //use this when running locally
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({
+            data
+        }));
+    }
+
+    timeline.push(consent);
+    timeline.push(welcome);
+    timeline.push(get_id);
+    timeline.push(instructions);
+    timeline.push(response_trial_1);
+    timeline.push(response_trial_2);
+    timeline.push(instructions_2);
+    for (var i = 0; i < num_consid*2; i++) {
+        timeline.push(if_node);
+    };
+    timeline.push(demo_instructions)
+    timeline.push(demo1);
+    timeline.push(demo2);
+    timeline.push(end);
+    timeline.push(end_debrief);
+
+    jsPsych.init({
+        timeline:timeline,
+    });
+
+    </script>
+</html>

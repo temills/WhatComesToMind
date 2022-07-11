@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dartmouth College</title>
+        <script src="../static/jspsych-6.3.1/jspsych.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-survey-text.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-call-function.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-button-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-survey-multi-choice.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-test.js"></script>
+        <link href="../static/jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <script.src = 'https://code.jquery.com/jquery-3.4.1.min.js'></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <body>
+    </body> 
+    <script>
+    //for this subject
+    //for each animal, for each feature, what is the rating
+    //eventually want to see for each subject, for features that corr w coming to mind, are you faster
+    //do differences in speed for dif features between subjects predict how correlated that is w coming to mind
+    //problem: faster at rating responses you gave bc know those well?
+        //would need to take own responses out and see if correlation still holds?
+    //to test this, want dif subjects to be faster at responding to dif things
+    //and rate the things they think of differently
+    //probs want mostly semi-predictive features, so can have differences between subjects
+    //also range in predictiveness so that for single subjects, some are more predictive than others
+    //want category with range 
+
+    //To do:
+        //tell them to put fingers on keys 1-8 instructions
+        //practice round where they see "don't agree" and press correct number
+
+    //Examine how well individual differences in feature relevance predict individual differences in what comes to mind
+            //i. Assign participants to a category
+            //ii. Ask them to list members of the category as they come to mind
+            //iii. To measure relevance of various features, ask them to list 
+                  //members of the category that are described by different features as quickly as they can
+            //iv. Ask them to rate each item they called to mind in terms of each of these features
+
+            //i. For each participant, does feature relevance predict likelihood of coming to mind?
+            //ii. Do differences in feature relevance between participants predict differences in what comes to mind?
+
+    /***************************************** Variables *********************************************/
+
+    var completion_code = 'xxx';
+    var items_unshuffled = ["carrots", "broccoli", "lettuce", "peas", "potatoes", "onions", "cauliflower", "corn", "green beans", "tomatoes", "cucumbers", "spinach", "squash", "celery", "peppers", "eggplant", "cabbage", "asparagus", "brussel sprouts", "kale"]
+    var items = jsPsych.randomization.sampleWithoutReplacement(items_unshuffled, items_unshuffled.length)
+    //ugh take care of other versions of words people might say
+    var other_items = ["carrot", "a carrot", "broccoli", "lettuce", "peas", "pea", "a pea", "potatoes", "potato", "a potato", "onions", "onion", "an onion", "cauliflower", "corn", "green beans", "green bean", "tomatoes", "tomato", "a tomato", "cucumbers", "cucumber", "a cucumber", "spinach", "squash", "a sqash", "celery", "peppers", "pepper", "a pepper", "eggplant", "eggplants", "cabbage", "cabbages", "a cabbage", "asparagus", "brussel sprouts", "brussel sprout", "a brussel sprout", "kale"];
+    var statements = {"colorful":"This vegetable is colorful.", "dishes":"This vegetable is used in a large variety of dishes.", "popular":"This vegetable is popular.", "likes":"You like this vegetable.", "available":"This vegetable is widely available.", "healthy":"This vegetable is healthy.", "think":"You think about this vegetable often.", "fragrant":"This vegetable is fragrant.", "warm":"This vegetable grows in warm climates.", "sweet":"This vegetable is sweet.", "large":"This vegetable is large.", "crunchy":"This vegetable is crunchy.", "heavy":"This vegetable is heavy for its size.", "calories":"This vegetable is high in calories."}
+    var features = jsPsych.randomization.sampleWithoutReplacement(Object.keys(statements), Object.keys(statements).length)
+    var it_idx=0
+    var ft_idx=0
+    var animal_scores_per_feature = {}
+    for(let ft in features) {
+        animal_scores_per_feature[features[ft]] = []
+    }
+    var gen_data = []
+    var gen_data_rt = 0
+    var rating_practice_list = jsPsych.randomization.sampleWithoutReplacement([1,2,3,4,5,6,7,8],8);
+    var rating_practice_idx = 0;
+    var rating_practice_dict = {1:"very bad fit", 2:"bad fit", 3:"slightly bad fit", 4:"below average fit", 5:"above average fit", 6:"slightly good fit", 7:"good fit", 8:"very good fit"};
+    /***************************************** Trials *********************************************/
+    //15 or 10 minutes, maybe 60 participants? 
+    //across people, is there variability in how predictive a feature is?
+    //for these two groups, dif in speed?
+
+    //data:
+    //what 10 items did they think of
+    //which features correlated with coming to mind?
+        //are there differences between participants in what these features are?
+    //for each feature, what was average speed of response?
+    //did speed of response correlate with predictiveness of coming to mind?
+    //did differences in participants for speed of response to each/certain features
+    //predict differences in their predictiveness of coming to mind?
+        //can look at pairs of participants, compare speed and pred of all features
+        //or choose some feature and compare across participants
+
+    // consent
+    var consent = {
+        type: "html-button-response",
+        stimulus: "<DIV align='left'><div>&nbsp;</div><div>Please consider this information carefully before deciding whether to participate in this research.</div><div>&nbsp;</div><div>The purpose of this research is to examine which factors influence social judgment and decision-</div><div>making. You will be asked to make judgements about individuals and actions in social scenarios.</div><div>We are simply interested in your judgement. The study will take less than 1 hour to complete,</div><div>and you will receive less than $20 on Amazon Mechanical Turk. Your compensation and time</div><div>commitment are specified in the study description. There are no anticipated risks associated with</div><div>participating in this study. The effects of participating should be comparable to those you would</div><div>ordinarily experience from viewing a computer monitor and using a mouse or keyboard for a</div><div>similar amount of time. At the end of the study, we will provide an explanation of the questions</div><div>that motivate this line of research and will describe the potential implications.</div><div>&nbsp;</div><div>Your participation in this study is completely voluntary and you may refuse to participate or you</div><div>may choose to withdraw at any time without penalty or loss of benefits to you which are</div><div>otherwise entitled. Your participation in this study will remain confidential. No personally</div><div>identifiable information will be associated with your data. Also, all analyses of the data will be</div><div>averaged across all the participants, so your individual responses will never be specifically</div><div>analyzed.</div><div>&nbsp;</div><div>If you have questions or concerns about your participation or payment, or want to request a</div><div>summary of research findings, please contact Dr. Jonathan Phillips at</div><div><a href=mailto:Jonathan.S.Phillips@dartmouth.edu>Jonathan.S.Phillips@dartmouth.edu</a>.</div><div>&nbsp;</div><div>Please save a copy of this form for your records.</div><div>&nbsp;</div></DIV><div>Agreement:</div><DIV align='left'><div>The nature and purpose of this research have been sufficiently explained and I agree to</div><div>participate in this study. I understand that I am free to withdraw at any time without incurring</div><div>any penalty. Please consent by clicking the button below to continue. Otherwise, please exit the</div><div>study at any time.</div><div>&nbsp;</div></DIV>",
+        choices: ['Submit']
+    };
+
+    //welcome
+    var welcome = {
+	    type: "html-keyboard-response",
+	    stimulus: "<div class='center-content'><br><br><br><br>Welcome to the HIT. Press any key to begin.",
+    };
+
+    //get subject ID
+    var get_id = {
+	    type: 'survey-text',
+        preamble: ["Please enter your Prolific Worker ID below.<br><br>If you do not enter your ID accurately, we will not be able to pay you."],
+        questions: [{prompt: "Worker ID:", name: "subject_id", required: true}],
+        on_finish: function(data){
+            jsPsych.data.addProperties({
+                subject_id: data['response']['subject_id'],
+            });
+        }
+    }
+
+    //instructions for generation trial
+    var generation_instructions = {
+        type: "html-keyboard-response",
+        stimulus: "For the first part of this study, you will be asked to list vegetables. <br><br> Please list whatever vegetables come to mind, as they come to mind.<br><br>Press any key to begin.",
+    };
+
+    //generation trial where subjects list 10 zoo animals
+    var generation_trial = {
+        type: 'survey-text',
+        preamble: "<br>Please list vegetables as they come to mind, with one per text box.<br>",
+        questions: [
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+            { prompt: "", required: "true"},
+        ],
+        on_finish: function (data) {
+            var res = Object.values(data['response'])
+            gen_data = res
+            gen_data_rt = data['rt']
+            for(k=0;k<res.length;k++) {
+                r = res[k].toLowerCase()
+                if(!(items.includes(r) || other_items.includes(r))) {
+                    items.push(r)
+                }
+            }
+        }
+    }
+
+    //instructions for ratings trials
+    var rating_instructions = {
+        type: "html-keyboard-response",
+        stimulus: function() {
+            return "For the next part of this study, you will be asked to rate how well different vegetables fit various descriptions as quickly as you can.<br><br>For each of " + items.length + " vegetables, you will be shown the name of the vegetable,<br>and then asked to rate, on a scale of 1-8, how well different descriptions fit that vegetable.<br>A rating of 1 should indicate that the description does not fit the vegetable at all, while a rating of 8 should indicate that the description fits the vegetable very well.<br>In order to give these ratings as quickly as possible, please place your fingers on the keys numbered 1-8 on your keyboard, and press the corresponding key when giving a rating.<br>Place your fingers in this position now and press any key to continue on to some practice."
+        }
+    };
+    var rating_practice = {
+        type: "html-keyboard-response",
+        stimulus: function() {
+            return "Press the " + rating_practice_list[rating_practice_idx] + " key to indicate a " + rating_practice_dict[rating_practice_list[rating_practice_idx]] + " between a description and a vegetable.<br>Press this key now."
+        },
+        choices: function() {
+            return [rating_practice_list[rating_practice_idx].toString()];
+        },
+        on_finish: function() {
+            rating_practice_idx = rating_practice_idx +1;
+            if (rating_practice_idx==8) {
+                rating_practice_idx= 0
+            }
+        }
+    }
+    var rating_practice2 = {
+        type: "html-keyboard-response",
+        stimulus: function() {
+            return "Press the " + rating_practice_list[rating_practice_idx] + " key";
+        },
+        choices: function() {
+            return [rating_practice_list[rating_practice_idx].toString()];
+        },
+        on_finish: function() {
+            rating_practice_idx = rating_practice_idx +1;
+        }
+    }
+
+    var pre_pre_rating_trial = {
+        type: "html-button-response",
+        stimulus: "Thank you. Click 'Continue' begin this phase of the study.<br><br>",
+        choices: ['Continue']
+    }
+
+    var pre_rating_trial = {
+        on_start: function() {
+            ft_idx = 0
+        },
+        type: "html-keyboard-response",
+        stimulus: function() {
+            var it = items[it_idx]
+            return "Consider <b>" + it + "</b>.<br><br><b>As quickly as possible</b>, please rate on a scale of 1-8 how well different descriptions fit this vegetable.<br>A rating of 1 indicates that the description does not fit the vegetable, and 8 indicates that the description fits the vegetable very well.<br>Place 8 of your fingers on keys 1-8, and indicate your rating by pressing the corresponding key.<br>As soon as you do so, you will immediately be shown the next description.<br><br>After rating how well each description fits the given vegetable, you will have a break before the next trial.<br>Press any key to begin"
+        }
+    }
+
+    var rating_trial = {
+        type: "html-keyboard-response",
+        stimulus: function() {
+            var it = items[it_idx]
+            var ft = features[ft_idx]
+            return "<b>"+it+"</b><br><br><br><br>"+statements[ft]
+        },
+        choices: ['1','2','3','4','5','6','7','8'],
+        on_finish: function(data) {
+            //add [item, score, rt] to list for this feature
+            animal_scores_per_feature[features[ft_idx]].push([items[it_idx], data["response"], data["rt"]])
+            ft_idx = ft_idx + 1
+        }
+    };
+
+    var post_rating_trial = {
+        type: "html-keyboard-response",
+        stimulus: function() {
+            it_idx = it_idx + 1
+            if(it_idx == items.length) {
+                var all_data = {}
+                all_data.animal_scores_per_feature = animal_scores_per_feature
+                all_data.gen_data = gen_data
+                all_data.gen_data_rt = gen_data_rt
+                all_data.exp_phase = "exp"
+                all_data.subject_id = jsPsych.data.get().values()[0].subject_id
+                save_data(all_data)
+                return "Thank you for completing this phase of the study! Press any key to move on to the next phase.<br>"
+            } else {
+                return "Thank you for completing this round of responses!<br><br>Press any key to move on to the next round! (" + (it_idx+1) + "/" + items.length + ")<br>"
+            }
+        }
+    }
+
+    //demographics  
+    var demo_instructions = {
+        type: "html-keyboard-response",
+	    stimulus: "<div>Next, please provide us with some demographic information.</div><div>Press any key to begin.</div>",
+    };
+    var demo1 = {
+        type: 'survey-text',
+        preamble: '',
+        questions: [{prompt: "How old are you?", required: true}, {prompt: "What is your native language?", required: true}, {prompt: "What is your nationality?", required: true}, {prompt: "In which country do you live?", required: true}],
+    };
+    //saves data on completion of this trial
+    var demo2 = {
+        type: 'survey-multi-choice',
+        preamble: "Please provide us with some demographic information.",
+        questions: [
+            {prompt: "What is your gender?", options: ["Male","Female","Other"], required:true}, 
+            {prompt: "Are you a student?", options: ["Yes","No"], required: true},
+            {prompt: "What is your education level?", options: ["Grade/elementary school","High school","Some college or university","College or university degree","Graduate degree, Masters","PhD"], required: true}
+        ],
+        on_finish: function(data) {
+            data.exp_phase = 'subject_info';
+            var lastData = jsPsych.data.get().last(2).values();
+            var demo1 = lastData[0]['response'];
+            var demo2 = lastData[1]['response'];
+            data.age = demo1['Q0'];
+            data.language = demo1['Q1'];
+            data.nationality = demo1['Q2'];
+            data.country = demo1['Q3'];
+            data.gender = demo2['Q0'];
+            data.student = demo2['Q1'];
+            data.education = demo2['Q2'];
+            data.completion_code = completion_code;
+            save_data(data);
+        },
+	};
+
+    //provide completion code
+    var end = {
+        type: "html-button-response",
+        stimulus: "<h4>Thank you for your participation!</h4><h4>In order to complete this HIT, you must enter the code below into Prolific.</h4><h4>Your secret completion code is:<br><br>" + completion_code + "<br><br>Copy this code now.</h4><h4>Once you've copied it, click the button below to leave this window.</h4>",
+        choices: ['Finish'],
+    };
+
+    //debrief
+    var debrief = {
+	    type: "html-keyboard-response",
+	    stimulus: "<DIV align='left'><div>&nbsp;</div><div><strong>Study Debriefing</strong></div><div>Judgement and decision making are important aspects of public and private life. Using surveys</div><div>like the one you just completed, we are examining the factors that go into making social</div><div>decisions.</div><div>&nbsp;</div><div><strong>How is this being tested?</strong></div><div>We have asked you to respond to stories or videos that differ on several important factors. By</div><div>isolating different variables that are involved in social thought, we can better understand how we</div><div>arrive at complex decision-making. For example, some actions are seen as more worthy of blame</div><div>if they are performed intentionally. Harming someone on purpose is generally worse than</div><div>harming someone by accident, or even harming someone in a way that is foreseen but not</div><div>intended.</div><div>&nbsp;</div><div><strong>Main questions and hypotheses:</strong></div><div>A fundamental goal of our research is to understand the cognitive and emotional factors that</div><div>influence social judgment and decision-making. We are studying these factors by presenting</div><div>people with hypothetical questions that vary in specific ways and seeing which factors make a</div><div>difference. Some people filled out the same survey that you just filled out. Others got slightly</div><div>different surveys.</div><div>&nbsp;</div><div><strong>Why is this important to study?</strong></div><div>By comparing answers on these important factors, we learn about what factors affect social</div><div>judgment. This has crucial implications for many public domains, including the legal system.</div><div>&nbsp;</div><div><strong>How to learn more:</strong></div><div>If you are interested in learning more, you may want to consult the following articles:</div><div>Phillips, J., &amp; Cushman, F. (2017). Morality constrains the default representation of what is</div><div style='padding-left: 30px;'>possible. Proceedings of the National Academy of Sciences of the United States of</div><div style='padding-left: 30px;'>America, 114(18), 4649&ndash;4654. https://doi.org/10.1073/pnas.1619717114</div><div>Phillips, J., Morris, A., &amp; Cushman, F. (2019). How we know what not to think.</div><div style='padding-left: 30px;'>Trends in Cognitive Sciences, 23(12), 1026&ndash;1040. https://doi.org/10.1016/j.tics.2019.09.007</div><div>Phillips, J., Buckwalter, W., Cushman, F., Friedman, O., Martin, A., Turri, J., Santos, L., &amp;</div><div style='padding-left: 30px;'>Knobe, J. (2020). Knowledge before Belief. Behavioral and Brain Sciences, 1-37.</div><div style='padding-left: 30px;'>doi:10.1017/S0140525X20000618</div><div>&nbsp;</div><div><strong>How to contact the researcher:</strong></div><div>If you have questions or concerns about your participation or</div><div>payment, or want to request a summary of research findings, please contact the Primary</div><div>Investigator: Dr. Jonathan Phillips, at Jonathan.S.Phillips@dartmouth.edu.</div><div>Whom to contact about your rights in this research:</div><div>If you have questions, concerns,</div><div>complaints, or suggestions about the present research, you may call the Office of the Committee</div><div>for the Protection of Human Subjects at Dartmouth College (603) 646-6482 during normal</div><div>business hours.</div><div>&nbsp;</div><div><strong>Thank you for your participation!</strong></div><div>&nbsp;</div></DIV>",
+    };
+
+    //save data to database
+    function save_data(data) {
+        console.log(data)
+        console.log(JSON.stringify({data}))
+        //var url = "wordGame"; //use this when running on server
+        var url = "/"; //use this when running locally
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({
+            data
+        }));
+    }
+
+    var if_node = {
+        timeline: [pre_rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, rating_trial, post_rating_trial],
+        conditional_function: function(){
+            if(it_idx < items.length){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    timeline = []
+    timeline.push(consent);
+    timeline.push(welcome);
+    timeline.push(get_id);
+    timeline.push(generation_instructions)
+    timeline.push(generation_trial)
+    timeline.push(rating_instructions)
+    for(i=0;i<8;i++) {
+        timeline.push(rating_practice)
+    }
+    for(i=0;i<8;i++) {
+        timeline.push(rating_practice2)
+    }
+    timeline.push(pre_pre_rating_trial)
+    for(i=0;i<items.length+10;i++) {
+        timeline.push(if_node)
+    }
+    timeline.push(demo_instructions)
+    timeline.push(demo1);
+    timeline.push(demo2);
+    timeline.push(end);
+    timeline.push(debrief);
+
+    jsPsych.init({
+        timeline:timeline,
+    });
+
+    </script>
+</html>

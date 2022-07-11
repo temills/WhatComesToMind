@@ -63,7 +63,7 @@
   font-size: 14px;
   font-weight: 400;
   font-family: 'Open Sans', 'Arial', sans-serif;
-  cursor: pointer;
+  cursor: grab;
   line-height: 1.4;
   text-align: center;
   white-space: nowrap;
@@ -122,4 +122,17 @@
 /* Control appearance of jsPsych.data.displayData() */
 #jspsych-data-display {
   text-align: left;
+}
+
+.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.boxed-btn {
+  border: 1px solid rgb(255, 255, 255);
+  border-radius: 4px;
+  padding: 10px;
+  cursor: grab;
+  background: rgb(255, 255, 255);
 }

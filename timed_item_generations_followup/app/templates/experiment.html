@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dartmouth College</title>
+        <script src="../static/jspsych-6.3.1/jspsych.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-survey-text.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-call-function.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-html-button-response.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-survey-multi-choice.js"></script>
+        <script src="../static/jspsych-6.3.1/plugins/jspsych-test.js"></script>
+        <link href="../static/jspsych-6.3.1/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <script.src = 'https://code.jquery.com/jquery-3.4.1.min.js'></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <body>
+    </body> 
+    <script>
+    //TODO
+    //bigness predicts what comes to mind
+    //do smallness
+    //relevant space is biased towards certain features/dimensions
+    //take top 3 for each category and take conceptual opposite
+
+    //what features to include (only predictive ones?)
+    //how to do opposite features - big/small, big/not big, small/not small
+    //ok to have same participant name both ends of feature spectrum? (should be if random order)
+    //should do for multiple categories?
+    
+    //for each participant, do one feature for each category
+
+    /***************************************** Study *********************************************/
+    //so far we've shown that the extent to which an item having a certain feature predicts its coming to mind
+    //corresponds to how quickly people can name items with those features
+
+    //this shows that features that predict coming to mind are those that are more central to our reps of items
+
+    //we predict people can name objects...
+    //more quickly when prompted with a feature that is central to rep of that type of object
+    //and less quickly when prompted with the opposite feature
+
+    //some features we don't represent along at any point on the spectrum really, like small or large feet relative to body size
+    //for others, certain side of spectrum might be more important, like small or large
+
+    //we've already shown that largeness correlates w coming to mind
+    //and we've shown that people name large animals more easily than for features which don't predict coming to mind
+    //this study will further clarify this relationship
+    //for features which correlate with coming to mind, we should see that it's harder to name objects w the opposite feature
+    //this relationship holds within a certain feature spectrum
+    
+    //also expect the difference in ease of response to be proportional to how predictive one end of that feature is of coming to mind
+
+    //ideally want to have a few highly predictive features, as well as some less predictive
+    //perhaps some negative correlations as well (so opp feature should be easier to name)
+
+
+    /***************************************** Variables *********************************************/
+
+    var completion_code = 'xxx';
+   
+    //each subject sees one feature from each category
+    var ft_by_cat = {'zoo animal': ["is small", "is large", "is striking", "is boring", "is cool", "is lame"],
+                     'holiday': ["likes", "think about often", "time off"],
+                     'job': ["been around", "common", "important"],
+                     'kitchen appliance': ["think", "common", "plain sight"],
+                     'chain restaurant': ['many locations', 'popular', 'expensive'],
+                     'sport': ["spectators", "popular", "think"],
+                     'vegetable': ["is widely available", "dishes", "popular"]
+                    }
+    var categories = jsPsych.randomization.sampleWithoutReplacement(Object.keys(ft_by_cat), Object.keys(ft_by_cat).length)
+    var features = [];
+    for(i=0;i<categories.length;i++){
+        //add random feature from this category to feature list
+        features.push(jsPsych.randomization.sampleWithoutReplacement(ft_by_cat[categories[i]], 1)[0]);
+    }
+
+    var duration = 10000;
+    var start = Date.now;
+
+    var res_num = 1;
+
+    var timeline = [];
+    /***************************************** Trials *********************************************/
+
+    // consent
+    var consent = {
+        type: "html-button-response",
+        stimulus: "<DIV align='left'><div>&nbsp;</div><div>Please consider this information carefully before deciding whether to participate in this research.</div><div>&nbsp;</div><div>The purpose of this research is to examine which factors influence social judgment and decision-</div><div>making. You will be asked to make judgements about individuals and actions in social scenarios.</div><div>We are simply interested in your judgement. The study will take less than 1 hour to complete,</div><div>and you will receive less than $20 on Amazon Mechanical Turk. Your compensation and time</div><div>commitment are specified in the study description. There are no anticipated risks associated with</div><div>participating in this study. The effects of participating should be comparable to those you would</div><div>ordinarily experience from viewing a computer monitor and using a mouse or keyboard for a</div><div>similar amount of time. At the end of the study, we will provide an explanation of the questions</div><div>that motivate this line of research and will describe the potential implications.</div><div>&nbsp;</div><div>Your participation in this study is completely voluntary and you may refuse to participate or you</div><div>may choose to withdraw at any time without penalty or loss of benefits to you which are</div><div>otherwise entitled. Your participation in this study will remain confidential. No personally</div><div>identifiable information will be associated with your data. Also, all analyses of the data will be</div><div>averaged across all the participants, so your individual responses will never be specifically</div><div>analyzed.</div><div>&nbsp;</div><div>If you have questions or concerns about your participation or payment, or want to request a</div><div>summary of research findings, please contact Dr. Jonathan Phillips at</div><div><a href=mailto:Jonathan.S.Phillips@dartmouth.edu>Jonathan.S.Phillips@dartmouth.edu</a>.</div><div>&nbsp;</div><div>Please save a copy of this form for your records.</div><div>&nbsp;</div></DIV><div>Agreement:</div><DIV align='left'><div>The nature and purpose of this research have been sufficiently explained and I agree to</div><div>participate in this study. I understand that I am free to withdraw at any time without incurring</div><div>any penalty. Please consent by clicking the button below to continue. Otherwise, please exit the</div><div>study at any time.</div><div>&nbsp;</div></DIV>",
+        choices: ['Submit']
+    };
+    //timeline.push(consent);
+
+    //welcome
+    var welcome = {
+	    type: "html-keyboard-response",
+	    stimulus: "<div class='center-content'><br><br><br><br>Welcome to the HIT. Press any key to begin.",
+    };
+    //timeline.push(welcome);
+
+    //get subject ID
+    var get_id = {
+	    type: 'survey-text',
+        preamble: ["Please enter your Prolific Worker ID below.<br><br>If you do not enter your ID accurately, we will not be able to pay you."],
+        questions: [{prompt: "Worker ID:", name: "subject_id", required: true}],
+        on_finish: function(data){
+            jsPsych.data.addProperties({
+                subject_id: data['response']['subject_id'],
+            });
+        }
+    }
+    //timeline.push(get_id);
+
+    //set instructions
+    var instructions = {
+        type: "html-keyboard-response",
+        stimulus: "In this experiment, you will be asked to list members of various categories that fit a certain description.<br><br> You will have " + duration/1000 + " seconds per round to give answers, after which the round will automatically end. Please work as fast as you can, listing category members that you think fit the description as quickly as possible.<br><br> Type one category member per text box, and then press enter.<br><br>Press any key to begin."
+    };
+    timeline.push(instructions);
+
+    //now loop thru trials
+    var j = 0;
+    for(var i=0; i<features.length; i++){
+        var loop_num = 1;
+        var timer_start = {
+            type: 'call-function',
+            func: function(){
+                start = Date.now();
+                setTimeout(function(){
+                    jsPsych.finishTrial();
+                }, duration);
+            }
+        }
+        var q_timeline = {
+            timeline: [
+                {
+                    type: 'survey-text',
+                    var: f = features[i],
+                    var: c = categories[i],
+                    preamble: "<br> List a " + c + " that " + f + ". <br><br> Then press enter.",
+                    questions: [
+                        { prompt: "", required: true, name: [c,f]},
+                    ],
+                    button_label: "no button pls",
+                    on_finish: function(data){
+                        //save data: want response, res_num feature, and rt
+                        if (data.response==null) {
+                            return;
+                        }
+                        var trial_data = {};
+                        trial_data.subject_id = jsPsych.data.get().values()[0].subject_id;
+                        trial_data.res_num = res_num;
+                        trial_data.res_order = loop_num;
+                        trial_data.res = Object.values(data.response)[0];
+                        trial_data.cat = Object.keys(data.response)[0][0];
+                        trial_data.ft = Object.keys(data.response)[0][1];
+                        trial_data.rt = data.rt;
+                        save_data(trial_data);
+                        res_num = res_num + 1;  //this never gets reset, row num
+                        loop_num = loop_num + 1;  //this gets reset for each feature
+                    }
+                },
+            ],
+            loop_function: function(){
+                if(Date.now() - start < duration){
+                    return true;
+                } else {
+                    loop_num = 1;
+                    return false;
+                }
+            }
+        };
+
+        var debrief = {
+            type: "html-button-response",
+            stimulus: function(){
+                j = j+1;
+                if(j<features.length) {
+                    var msg = "The round has finished!<br><br> Please continue to list category members as quickly as possible, pressing enter after each response. <br><br> Click 'Continue' when you're ready for the next round. <br><br>";
+                }
+                else {
+                    var msg = "The round has finished! Click 'Continue' to continue with the study. <br><br>";
+                }
+                return msg;
+            },
+            choices: ['Continue'],
+        }
+        
+        timeline.push(timer_start, q_timeline, debrief);
+    }
+
+
+    //demographics  
+    var demo_instructions = {
+        type: "html-keyboard-response",
+	    stimulus: "<div>Next, please provide us with some demographic information.</div><div>Press any key to begin.</div>",
+    };
+    var demo1 = {
+        type: 'survey-text',
+        preamble: '',
+        questions: [{prompt: "How old are you?", required: true}, {prompt: "What is your native language?", required: true}, {prompt: "What is your nationality?", required: true}, {prompt: "In which country do you live?", required: true}],
+    };
+    //saves data on completion of this trial
+    var demo2 = {
+        type: 'survey-multi-choice',
+        preamble: "Please provide us with some demographic information.",
+        questions: [
+            {prompt: "What is your gender?", options: ["Male","Female","Other"], required:true}, 
+            {prompt: "Are you a student?", options: ["Yes","No"], required: true},
+            {prompt: "What is your education level?", options: ["Grade/elementary school","High school","Some college or university","College or university degree","Graduate degree, Masters","PhD"], required: true}
+        ],
+        on_finish: function(data) {
+            data.exp_phase = 'subject_info';
+            var lastData = jsPsych.data.get().last(2).values();
+            var demo1 = lastData[0]['response'];
+            var demo2 = lastData[1]['response'];
+            data.age = demo1['Q0'];
+            data.language = demo1['Q1'];
+            data.nationality = demo1['Q2'];
+            data.country = demo1['Q3'];
+            data.gender = demo2['Q0'];
+            data.student = demo2['Q1'];
+            data.education = demo2['Q2'];
+            data.completion_code = completion_code;
+            save_data(data);
+        },
+	};
+
+    //provide completion code
+    var end = {
+        type: "html-button-response",
+        stimulus: "<h4>Thank you for your participation!</h4><h4>In order to complete this HIT, you must enter the code below into Prolific.</h4><h4>Your secret completion code is:<br><br>" + completion_code + "<br><br>Copy this code now.</h4><h4>Once you've copied it, click the button below to leave this window.</h4>",
+        choices: ['Finish'],
+    };
+
+    //debrief
+    var end_debrief = {
+	    type: "html-keyboard-response",
+	    stimulus: "<DIV align='left'><div>&nbsp;</div><div><strong>Study Debriefing</strong></div><div>Judgement and decision making are important aspects of public and private life. Using surveys</div><div>like the one you just completed, we are examining the factors that go into making social</div><div>decisions.</div><div>&nbsp;</div><div><strong>How is this being tested?</strong></div><div>We have asked you to respond to stories or videos that differ on several important factors. By</div><div>isolating different variables that are involved in social thought, we can better understand how we</div><div>arrive at complex decision-making. For example, some actions are seen as more worthy of blame</div><div>if they are performed intentionally. Harming someone on purpose is generally worse than</div><div>harming someone by accident, or even harming someone in a way that is foreseen but not</div><div>intended.</div><div>&nbsp;</div><div><strong>Main questions and hypotheses:</strong></div><div>A fundamental goal of our research is to understand the cognitive and emotional factors that</div><div>influence social judgment and decision-making. We are studying these factors by presenting</div><div>people with hypothetical questions that vary in specific ways and seeing which factors make a</div><div>difference. Some people filled out the same survey that you just filled out. Others got slightly</div><div>different surveys.</div><div>&nbsp;</div><div><strong>Why is this important to study?</strong></div><div>By comparing answers on these important factors, we learn about what factors affect social</div><div>judgment. This has crucial implications for many public domains, including the legal system.</div><div>&nbsp;</div><div><strong>How to learn more:</strong></div><div>If you are interested in learning more, you may want to consult the following articles:</div><div>Phillips, J., &amp; Cushman, F. (2017). Morality constrains the default representation of what is</div><div style='padding-left: 30px;'>possible. Proceedings of the National Academy of Sciences of the United States of</div><div style='padding-left: 30px;'>America, 114(18), 4649&ndash;4654. https://doi.org/10.1073/pnas.1619717114</div><div>Phillips, J., Morris, A., &amp; Cushman, F. (2019). How we know what not to think.</div><div style='padding-left: 30px;'>Trends in Cognitive Sciences, 23(12), 1026&ndash;1040. https://doi.org/10.1016/j.tics.2019.09.007</div><div>Phillips, J., Buckwalter, W., Cushman, F., Friedman, O., Martin, A., Turri, J., Santos, L., &amp;</div><div style='padding-left: 30px;'>Knobe, J. (2020). Knowledge before Belief. Behavioral and Brain Sciences, 1-37.</div><div style='padding-left: 30px;'>doi:10.1017/S0140525X20000618</div><div>&nbsp;</div><div><strong>How to contact the researcher:</strong></div><div>If you have questions or concerns about your participation or</div><div>payment, or want to request a summary of research findings, please contact the Primary</div><div>Investigator: Dr. Jonathan Phillips, at Jonathan.S.Phillips@dartmouth.edu.</div><div>Whom to contact about your rights in this research:</div><div>If you have questions, concerns,</div><div>complaints, or suggestions about the present research, you may call the Office of the Committee</div><div>for the Protection of Human Subjects at Dartmouth College (603) 646-6482 during normal</div><div>business hours.</div><div>&nbsp;</div><div><strong>Thank you for your participation!</strong></div><div>&nbsp;</div></DIV>",
+    };
+
+    //save data to database
+    function save_data(data) {
+        console.log(data);
+        return;
+        //var url = "wordGame"; //use this when running on server
+        var url = "/"; //use this when running locally
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({
+            data
+        }));
+    }
+
+    timeline.push(demo_instructions)
+    timeline.push(demo1);
+    timeline.push(demo2);
+    timeline.push(end);
+    timeline.push(end_debrief);
+
+    jsPsych.init({
+        timeline:timeline,
+    });
+
+    </script>
+</html>
